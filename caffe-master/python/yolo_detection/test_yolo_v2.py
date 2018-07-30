@@ -1,7 +1,7 @@
 # set up Python environment: numpy for numerical routines, and matplotlib for plotting
 import numpy as np
 import struct
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
 import cv2
 # display plots in this notebook
 
@@ -24,9 +24,9 @@ import binascii
 
 caffe.set_mode_cpu()
 
-model_def = 'D:/Code_local/caffe_yolov2_windows/net_work_train/yolov2deploy.prototxt'
+model_def = 'yolo.prototxt'
 #model_def = 'D:/Code_local/caffe_yolov2_windows/net_work_train/gnet_region_deploy.prototxt'
-model_weights = 'D:/Code_local/caffe_yolov2_windows/net_work_train/yolov2_416.caffemodel'
+model_weights = 'yolo.caffemodel'
 
 net = caffe.Net(model_def,      # defines the structure of the model
                 model_weights,  # contains the trained weights
@@ -70,7 +70,7 @@ def vis_square(data):
 	# tile the filters into an image
 	data = data.reshape((n, n) + data.shape[1:]).transpose((0, 2, 1, 3) + tuple(range(4, data.ndim + 1)))
 	data = data.reshape((n * data.shape[1], n * data.shape[3]) + data.shape[4:])
-	plt.imshow(data)
+	#plt.imshow(data)
 
 def draw_box(img, name, box, score):
 	""" draw a single bounding box on the image """
@@ -104,7 +104,7 @@ def show_results(img, results):
 			draw_box(img, result[0], (xmin, ymin, xmax, ymax), result[5])
 		if imshow:
 			cv2.imshow('YOLO detection', img)
-
+			cv2.waitKey(0);
 def GetBoxesAndShowResult(img, detectedresults, w, h):
 	result = []
 	label_name = {0: "bg", 1: "aeroplane", 2: "bicycle", 3: "bird", 4: "boat", 5: "bottle", 6: "bus", 7: "car",
@@ -118,6 +118,7 @@ def GetBoxesAndShowResult(img, detectedresults, w, h):
 		result.append([label_name[box[4]], box[0], box[1], box[2], box[3], box[5]])
 	show_results(img, result)
 	cv2.imshow('YOLO detection1', img)
+	cv2.waitKey(0);
 	cv2.imwrite('YOLO_detection.jpg', img)
 
 def sigmoid(p):
@@ -169,46 +170,9 @@ def det(image, image_id):
 
 	### perform classification
 	output = net.forward()
-
-	scale_data_layer1 = net.blobs['scale1'].data[0];
-	scale_data_shape = scale_data_layer1.shape
-	data_size = np.prod(scale_data_shape)
-	vis_square(scale_data_layer1)
-	bindata_size = data_size*4
-
-	caffecppfilepath = './caffe_result/layer_scale1_bn1.dat'
-	scale_data_layer1_cpp1D = np.fromfile(caffecppfilepath, dtype=np.float32)
-	scale_data_layer1_cpp = np.reshape(scale_data_layer1_cpp1D, [scale_data_shape[0], scale_data_shape[1], scale_data_shape[2]])
-	vis_square(scale_data_layer1_cpp)
-
-	conv_data_layer23 = net.blobs['conv23'].data[0];
-	conv23_data_shape = conv_data_layer23.shape
-	data_size = np.prod(conv23_data_shape)
-	vis_square(conv_data_layer23)
-	bindata_size = data_size*4
-
-	cafferesultcppfilepath = './caffe_result/layer_conv23_bn1.dat'
-	conv_data_layer23_cpp1D = np.fromfile(cafferesultcppfilepath, dtype=np.float32)
-	conv_data_layer23_cpp = np.reshape(conv_data_layer23_cpp1D, [conv23_data_shape[0], conv23_data_shape[1], conv23_data_shape[2]])
-	vis_square(conv_data_layer23_cpp)
-
-	darknetfilepath = './darknet_result/darknet_layer31_result.dat'
-	#data_float = np.zeros(scale_data_shape)
-	print scale_data_shape[0]
-	print scale_data_shape[1]
-	print scale_data_shape[2]
-	data_float1D = np.fromfile(darknetfilepath, dtype=np.float32)
-	scale_data = np.reshape(data_float1D, [conv23_data_shape[0], conv23_data_shape[1], conv23_data_shape[2]])
-	vis_square(scale_data)
-
-
-
-	diff = scale_data-conv_data_layer23_cpp
-	vis_square(diff)
-
 	res = output['conv23'][0]  # the output probability vector for the first image in the batch
 
-	res = conv_data_layer23_cpp
+	#res = conv_data_layer23_cpp
 	swap = np.zeros((13*13,5,25))
 
 	#change
@@ -295,9 +259,15 @@ def det(image, image_id):
     	# 	fid.write('\n')
     	# 	fid.close()
 
+
 def main():
 	data_root = 'D:/Code_local/caffe_yolov2_windows/net_work_train/';
 	index = 0;
+	pic = sys.argv[1]
+	image = caffe.io.load_image(pic)
+	det(image, '10001')
+	print 'over'
+'''
 	for line in open('D:/Code_local/caffe_yolov2_windows/net_work_train/Image_name_list.txt', 'r'):
 		index += 1
 		print index
@@ -307,6 +277,6 @@ def main():
 		#image = caffe.io.load_image(data_root + image_name)
 		image = caffe.io.load_image(image_name)
 		det(image, image_id)
-
+'''
 if __name__ == '__main__':
 	main()

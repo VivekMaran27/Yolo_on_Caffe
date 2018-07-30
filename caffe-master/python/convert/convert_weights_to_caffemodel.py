@@ -4,9 +4,9 @@ import numpy as np
 
 #caffe.set_device(0)  # if we have multiple GPUs, pick the first one
 caffe.set_mode_cpu()
-model_filename = 'D:/Code_local/caffe_yolov2_windows/net_work_train/yolov2_correct.prototxt'
-yoloweight_filename = 'D:/Code_local/caffe_yolov2_windows/net_work_train/yolov2_416.weights'
-caffemodel_filename = 'D:/Code_local/caffe_yolov2_windows/net_work_train/yolov2.caffemodel'
+model_filename = '../yolo_detection/yolo.prototxt'
+yoloweight_filename = '../yolo_detection/yolo.weights'
+caffemodel_filename = '../yolo_detection/yolo.caffemodel'
 
 v3caffemodel = 'D:/Code_local/caffe/caffe-master/caffe-master/examples/yolov3/model/yolov3.caffemodel'
 v3yoloweight = 'D:/Code_local/caffe/caffe-master/caffe-master/examples/yolov3/weights/yolov3.weights'
