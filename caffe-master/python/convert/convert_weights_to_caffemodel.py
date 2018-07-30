@@ -7,20 +7,9 @@ caffe.set_mode_cpu()
 model_filename = '../yolo_detection/yolo.prototxt'
 yoloweight_filename = '../yolo_detection/yolo.weights'
 caffemodel_filename = '../yolo_detection/yolo.caffemodel'
-
-v3caffemodel = 'D:/Code_local/caffe/caffe-master/caffe-master/examples/yolov3/model/yolov3.caffemodel'
-v3yoloweight = 'D:/Code_local/caffe/caffe-master/caffe-master/examples/yolov3/weights/yolov3.weights'
-modelv3_filename = 'D:/Code_local/caffe/caffe-master/caffe-master/examples/yolov3/prototxt/yolov3_deploy.prototxt'
-train_modelv3_filename = 'D:/Code_local/caffe/caffe-master/caffe-master/examples/yolov3/prototxt/yolov3_train_val.prototxt'
-
-model_filename = modelv3_filename
-yoloweight_filename = v3yoloweight
-caffemodel_filename = v3caffemodel
 print 'model file is ', model_filename
 print 'weight file is ', yoloweight_filename
 print 'output caffemodel file is ', caffemodel_filename
-
-#net_train = caffe.Net(train_modelv3_filename, caffe.TRAIN)
 net = caffe.Net(model_filename, caffe.TEST)
 #net.forward()
 # for each layer, show the output shape
@@ -43,10 +32,6 @@ print 'transFlag = %r' % transFlag
 netWeightsFloat = np.fromfile(yoloweight_filename, dtype=np.float32)
 netWeights = netWeightsFloat[4:]
 # start from the 5th entry, the first 4 entries are major, minor, revision and net.seen
-print netWeightsFloat[0]
-print netWeightsFloat[1]
-print netWeightsFloat[2]
-print netWeightsFloat[3]
 print netWeights.shape
 count = 0
 for pr in params:
@@ -58,6 +43,7 @@ for pr in params:
         break
     if layer.type == 'Convolution':
         print pr + "(conv)"
+	print lidx;
         # bias
         if len(net.params[pr]) > 1:
             bias_dim = net.params[pr][1].data.shape
@@ -71,12 +57,13 @@ for pr in params:
             conv_bias = None
         count += biasSize
         # batch_norm
-        next_layer = net.layers[lidx + 1]
-        if next_layer.type == 'BatchNorm':
-            bn_dims = (3, net.params[pr][0].data.shape[0])
-            bnSize = np.prod(bn_dims)
-            batch_norm = np.reshape(netWeights[count:count + bnSize], bn_dims)
-            count += bnSize
+	if lidx != 98:
+		next_layer = net.layers[lidx + 1]
+		if next_layer.type == 'BatchNorm':
+		    bn_dims = (3, net.params[pr][0].data.shape[0])
+		    bnSize = np.prod(bn_dims)
+		    batch_norm = np.reshape(netWeights[count:count + bnSize], bn_dims)
+		    count += bnSize
         # weights
         dims = net.params[pr][0].data.shape
         weightSize = np.prod(dims)
