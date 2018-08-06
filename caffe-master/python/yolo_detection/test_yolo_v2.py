@@ -22,7 +22,7 @@ from ctypes import *
 import binascii
 # If you get "No module named _caffe", either you have not built pycaffe or you have the wrong path.
 
-caffe.set_mode_cpu()
+caffe.set_mode_gpu()
 
 model_def = 'yolo.prototxt'
 #model_def = 'D:/Code_local/caffe_yolov2_windows/net_work_train/gnet_region_deploy.prototxt'
@@ -43,7 +43,7 @@ transformer = caffe.io.Transformer({'data': net.blobs['data'].data.shape})
 
 transformer.set_transpose('data', (2,0,1))  # move image channels to outermost dimension
 transformer.set_mean('data', mu)            # subtract the dataset-mean value in each channel
-transformer.set_raw_scale('data', 1.0)      # rescale from [0, 1] to [0, 255]
+#transformer.set_raw_scale('data', 1.0)      # rescale from [0, 1] to [0, 255]
 transformer.set_channel_swap('data', (0,1,2))  # swap channels from RGB to BGR
 
 net.blobs['data'].reshape(1,        # batch size
@@ -79,7 +79,7 @@ def draw_box(img, name, box, score):
 	box_tag = '{} : {:.2f}'.format(name, score)
 	text_x, text_y = 5, 7
 
-	cv2.rectangle(img, (xmin, ymin), (xmax, ymax), (0, 255, 0), 2)
+	cv2.rectangle(img, (xmin, ymin), (xmax, ymax), (0, 1, 0), 2)
 	boxsize, _ = cv2.getTextSize(box_tag, cv2.FONT_HERSHEY_SIMPLEX, 0.5, 1)
 	cv2.rectangle(img, (xmin, ymin - boxsize[1] - text_y),
 					(xmin + boxsize[0] + text_x, ymin), (0, 225, 0), -1)
@@ -99,12 +99,12 @@ def show_results(img, results):
 					  format(result[0], box_x, box_y, box_w, box_h, str(result[5])))
 		xmin, xmax = max(box_x - box_w // 2, 0), min(box_x + box_w // 2, img_width)
 		ymin, ymax = max(box_y - box_h // 2, 0), min(box_y + box_h // 2, img_height)
-
+		#458,435,124,218
 		if imshow:
 			draw_box(img, result[0], (xmin, ymin, xmax, ymax), result[5])
-		if imshow:
-			cv2.imshow('YOLO detection', img)
-			cv2.waitKey(0);
+		#if imshow:
+			#cv2.imshow('YOLO detection', img)
+			#cv2.waitKey(0);
 def GetBoxesAndShowResult(img, detectedresults, w, h):
 	result = []
 	label_name = {0: "bg", 1: "aeroplane", 2: "bicycle", 3: "bird", 4: "boat", 5: "bottle", 6: "bus", 7: "car",
@@ -117,9 +117,8 @@ def GetBoxesAndShowResult(img, detectedresults, w, h):
 		box[3] *= h
 		result.append([label_name[box[4]], box[0], box[1], box[2], box[3], box[5]])
 	show_results(img, result)
-	cv2.imshow('YOLO detection1', img)
-	cv2.waitKey(0);
-	cv2.imwrite('YOLO_detection.jpg', img)
+	cv2.imshow('Video', img);
+	return img;
 
 def sigmoid(p):
     return 1.0 / (1 + math.exp(-p * 1.0))
@@ -163,10 +162,8 @@ def apply_nms(boxes, thres):
 
 
 def det(image, image_id):
-	#cv2.imshow('data_win', image)
 	transformed_image = transformer.preprocess('data', image)
-
-	net.blobs['data'].data[...] = transformed_image
+	net.blobs['data'].data[...] = transformed_image;
 
 	### perform classification
 	output = net.forward()
@@ -224,59 +221,60 @@ def det(image, image_id):
 
 	w = image.shape[1]
 	h = image.shape[0]
-
-	GetBoxesAndShowResult(image, res, w, h)
-
-	# res_name = "D:/Code_local/caffe_yolov2_windows/net_work_train/comp4_det_test_";
-	# for box in res:
-    	# 	name = res_name + label_name[box[4]]
-	# 	#print name
-    	# 	fid = open(name+".txt", 'a')
-    	# 	fid.write(image_id[:-4])
-    	# 	fid.write(' ')
-    	# 	fid.write(str(box[5]*box[6]))
-    	# 	fid.write(' ')
-	# 	xmin = (box[0]-box[2]/2.0) * w;
-	# 	xmax = (box[0]+box[2]/2.0) * w;
-	# 	ymin = (box[1]-box[3]/2.0) * h;
-	# 	ymax = (box[1]+box[3]/2.0) * h;
-	#         if xmin < 0:
-	# 		xmin = 0
-	# 	if xmax > w:
-	# 		xmax = w
-	# 	if ymin < 0:
-	# 		ymin = 0
-	# 	if ymax > h:
-	# 		ymax = h
-	#
-    	# 	fid.write(str(xmin))
-    	# 	fid.write(' ')
-    	# 	fid.write(str(ymin))
-    	# 	fid.write(' ')
-    	# 	fid.write(str(xmax))
-    	# 	fid.write(' ')
-    	# 	fid.write(str(ymax))
-    	# 	fid.write('\n')
-    	# 	fid.close()
-
+	return GetBoxesAndShowResult(image, res, w, h);
 
 def main():
-	data_root = 'D:/Code_local/caffe_yolov2_windows/net_work_train/';
-	index = 0;
-	pic = sys.argv[1]
-	image = caffe.io.load_image(pic)
-	det(image, '10001')
-	print 'over'
-'''
-	for line in open('D:/Code_local/caffe_yolov2_windows/net_work_train/Image_name_list.txt', 'r'):
-		index += 1
-		print index
-		image_name = line.strip('\n')
-		#image_name = line.split(' ')[0]
-		image_id = image_name.split('/')[-1]
-		#image = caffe.io.load_image(data_root + image_name)
-		image = caffe.io.load_image(image_name)
-		det(image, image_id)
-'''
+	'''
+	image = caffe.io.load_image(sys.argv[1]);
+	res = det(image, '1');
+	'''
+	#Input video
+	input_vid = sys.argv[1];
+	# Create a VideoCapture object and read from input file
+	# If the input is the camera, pass 0 instead of the video file name
+	cap = cv2.VideoCapture(input_vid);
+ 	frame_count = 0;
+
+	#Output video
+	name = 'out.mp4'
+	fourcc = cv2.VideoWriter_fourcc(*'MP4V')
+	out = cv2.VideoWriter(name, fourcc, 20.0, (1280,720))
+
+	# Check if camera opened successfully
+	if (cap.isOpened()== False): 
+		print("Error opening video stream or file");
+ 
+	# Read until video is completed
+	while(cap.isOpened()):
+
+  		# Capture frame-by-frame
+		frame_count=frame_count +1;
+		ret, frame = cap.read();
+		np_frame = np.asarray(frame); 
+		np_frame = np_frame/255.0;
+		if ret == True:
+	   		res = det(np_frame, frame_count);
+		        #res = res[...,::-1];	
+			res = res*255.0;
+			#print res.shape;
+			out.write(np.uint8(res));
+			print frame_count;
+			if frame_count ==  500:
+				break;
+			#Press Q on keyboard to  exit
+			if cv2.waitKey(25) & 0xFF == ord('q'):
+				break;
+ 
+		# Break the loop
+  		else: 
+			break;
+ 
+	# When everything done, release the video capture object
+	cap.release();
+	out.release();
+
+	# Closes all the frames
+	cv2.destroyAllWindows();
+
 if __name__ == '__main__':
 	main()
